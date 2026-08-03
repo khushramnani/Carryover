@@ -6,7 +6,7 @@ import { Toggle } from "@/components/toggle";
 import { analyzeSession } from "@/lib/bank";
 import { DEFAULT_PHRASES } from "@/lib/phrases";
 import { parseDiscordDump } from "@/lib/discord";
-import { dayKey as dk, fmtDate, fmtHMCompact, fmtTime } from "@/lib/time";
+import { dayKey as dk, fmtDayKey, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
 import {
   clearAllData,
@@ -451,7 +451,7 @@ Logging Out`;
                       const conflict = !!state.sessions[d.key];
                       return (
                         <tr key={d.key}>
-                          <td className="name">{fmtDate(new Date(d.key))}</td>
+                          <td className="name">{fmtDayKey(d.key)}</td>
                           <td>{d.events.length}</td>
                           <td>
                             {d.loginTs ? fmtTime(d.loginTs) : "—"} →{" "}

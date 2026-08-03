@@ -1,5 +1,5 @@
 import { DEFAULT_PHRASES } from "./phrases";
-import { addDays, timeOnDay, dayKey } from "./time";
+import { addDays, timeOnDay, dayKey, istWallClock } from "./time";
 import { uid } from "./utils";
 import type { EventKind, WorkEvent } from "./types";
 
@@ -57,15 +57,16 @@ export function parseDiscordHeader(
     let H = parseInt(hh, 10);
     if (ap?.toLowerCase() === "pm" && H < 12) H += 12;
     if (ap?.toLowerCase() === "am" && H === 12) H = 0;
-    const d = new Date(year, parseInt(mm, 10) - 1, parseInt(dd, 10), H, parseInt(mi, 10), 0, 0);
-    if (!isNaN(d.getTime())) return { ts: d.getTime() };
+    // Discord exports show wall-clock in the reader's zone; everyone here is IST.
+    const ts = istWallClock(year, parseInt(mm, 10) - 1, parseInt(dd, 10), H, parseInt(mi, 10));
+    if (!isNaN(ts)) return { ts };
   }
 
   m = s.match(/(\d{4})-(\d{2})-(\d{2})[\sT](\d{1,2}):(\d{2})/);
   if (m) {
     const [, y, mo, dd, hh, mi] = m;
-    const d = new Date(+y, +mo - 1, +dd, +hh, +mi, 0, 0);
-    if (!isNaN(d.getTime())) return { ts: d.getTime() };
+    const ts = istWallClock(+y, +mo - 1, +dd, +hh, +mi);
+    if (!isNaN(ts)) return { ts };
   }
 
   m = s.match(/\b(yesterday|today)\s*(?:at\s*)?(\d{1,2}):(\d{2})\s*(am|pm|AM|PM)?/i);

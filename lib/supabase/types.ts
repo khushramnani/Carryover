@@ -15,6 +15,10 @@ export type Database = {
         Row: {
           id: string;
           email: string | null;
+          discord_user_id: string | null;
+          discord_username: string | null;
+          admin_channel_id: string | null;
+          guild_member_verified_at: string | null;
           required_ms: number;
           official_start: string;
           official_end: string;
@@ -27,6 +31,10 @@ export type Database = {
         Insert: {
           id: string;
           email?: string | null;
+          discord_user_id?: string | null;
+          discord_username?: string | null;
+          admin_channel_id?: string | null;
+          guild_member_verified_at?: string | null;
           required_ms?: number;
           official_start?: string;
           official_end?: string;
@@ -39,6 +47,10 @@ export type Database = {
         Update: {
           id?: string;
           email?: string | null;
+          discord_user_id?: string | null;
+          discord_username?: string | null;
+          admin_channel_id?: string | null;
+          guild_member_verified_at?: string | null;
           required_ms?: number;
           official_start?: string;
           official_end?: string;

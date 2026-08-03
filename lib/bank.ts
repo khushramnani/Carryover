@@ -1,3 +1,4 @@
+import { dayKey } from "./time";
 import type {
   AppState,
   DaySession,
@@ -99,11 +100,7 @@ export function sessionsFromEvents(
 ): Record<string, DaySession> {
   const grouped: Record<string, WorkEvent[]> = {};
   for (const e of events) {
-    const d = new Date(e.ts);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const k = `${y}-${m}-${day}`;
+    const k = dayKey(e.ts);
     if (!grouped[k]) grouped[k] = [];
     grouped[k].push(e);
   }

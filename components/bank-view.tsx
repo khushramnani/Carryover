@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { analyzeSession, calculateBank } from "@/lib/bank";
-import { fmtDate, fmtHMCompact, fmtTime } from "@/lib/time";
+import { fmtDayKey, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
 import type { AppState } from "@/lib/types";
 
@@ -175,7 +175,7 @@ export function BankView({ state }: BankViewProps) {
               );
               return (
                 <tr key={key}>
-                  <td className="name">{fmtDate(new Date(key))}</td>
+                  <td className="name">{fmtDayKey(key)}</td>
                   <td>{fmtHMCompact(workedMs)}</td>
                   <td>{fmtHMCompact(breakMs)}</td>
                   <td>

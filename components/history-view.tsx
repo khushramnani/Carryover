@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Stat } from "@/components/stat";
 import { analyzeSession, calculateBank } from "@/lib/bank";
-import { fmtDate, fmtDateFull, fmtHMCompact, fmtTime } from "@/lib/time";
+import { fmtDayKey, fmtDayKeyFull, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
 import type { AppState } from "@/lib/types";
 
@@ -85,12 +85,11 @@ export function HistoryView({ state }: HistoryViewProps) {
           )}
           {items.map(({ key, delta }) => {
             const h = (Math.abs(delta) / maxAbs) * 70;
-            const d = new Date(key);
             return (
               <div
                 className="hist-bar-wrap"
                 key={key}
-                title={`${fmtDate(d)}: ${delta >= 0 ? "+" : "−"}${fmtHMCompact(Math.abs(delta))}`}
+                title={`${fmtDayKey(key)}: ${delta >= 0 ? "+" : "−"}${fmtHMCompact(Math.abs(delta))}`}
               >
                 <div className="hist-bar-col">
                   <div className="hist-baseline" style={{ bottom: "50%" }} />
@@ -106,7 +105,7 @@ export function HistoryView({ state }: HistoryViewProps) {
                     />
                   )}
                 </div>
-                <span className="hist-label">{d.getDate()}</span>
+                <span className="hist-label">{key.slice(8)}</span>
               </div>
             );
           })}
@@ -128,7 +127,7 @@ export function HistoryView({ state }: HistoryViewProps) {
               const a = analyzeSession(session.events, { includeOpen: false });
               return (
                 <tr key={key}>
-                  <td className="name">{fmtDateFull(new Date(key))}</td>
+                  <td className="name">{fmtDayKeyFull(key)}</td>
                   <td>{a.loginTs ? fmtTime(a.loginTs) : "—"}</td>
                   <td>{a.logoutTs ? fmtTime(a.logoutTs) : "—"}</td>
                   <td>{fmtHMCompact(a.workedMs)}</td>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
+import { notifyPunch } from "./discord-notify";
 import { dayKey as dk } from "./time";
 import type { EventKind, Plan, Policy } from "./types";
 
@@ -19,15 +20,18 @@ export async function addEvent(kind: EventKind) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const now = new Date();
+  const now = Date.now();
+  const dayKey = dk(now);
   const { error } = await supabase.from("events").insert({
     user_id: user.id,
     kind,
-    ts: now.toISOString(),
-    day_key: dk(now.getTime()),
+    ts: new Date(now).toISOString(),
+    day_key: dayKey,
   });
   if (error) throw new Error(error.message);
   revalidatePath("/", "layout");
+
+  await notifyPunch(supabase, user.id, kind, now, dayKey);
 }
 
 export async function deleteEvent(id: string) {
