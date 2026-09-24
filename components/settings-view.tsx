@@ -8,19 +8,19 @@ import { DEFAULT_PHRASES } from "@/lib/phrases";
 import { parseDiscordDump } from "@/lib/discord";
 import { dayKey as dk, fmtDayKey, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
-import {
-  clearAllData,
-  importEvents,
-  updatePolicy,
-  type ImportEventInput,
-} from "@/lib/actions";
+import type { ImportEventInput } from "@/lib/actions";
+import { useCarryover } from "@/components/demo-provider";
 import type { AppState, EventKind, Policy } from "@/lib/types";
 
 interface SettingsViewProps {
   state: AppState;
 }
 
-export function SettingsView({ state }: SettingsViewProps) {
+export function SettingsView({ state: serverState }: SettingsViewProps) {
+  const {
+    state,
+    actions: { clearAllData, importEvents, updatePolicy },
+  } = useCarryover(serverState);
   const [pasteText, setPasteText] = useState("");
   const [parsed, setParsed] = useState<ReturnType<typeof parseDiscordDump> | null>(
     null,

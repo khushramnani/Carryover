@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { getAppState, getProfile, getUser } from "@/lib/data";
+import { DemoProvider } from "@/components/demo-provider";
+import { getAppState, getProfile, getUser, isDemoSession } from "@/lib/data";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isGuildMember } from "@/lib/discord-api";
 import { isBetaAllowed } from "@/lib/discord-gate";
@@ -54,7 +55,17 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    if (!(await isDemoSession())) redirect("/login");
+    const state = await getAppState();
+    return (
+      <DemoProvider>
+        <AppShell email="test-user@carryover.demo" state={state!}>
+          {children}
+        </AppShell>
+      </DemoProvider>
+    );
+  }
 
   const profile = await getProfile();
   if (profile) await reverifyGuildMembership(profile);

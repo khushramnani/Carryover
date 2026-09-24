@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { DEMO_COOKIE } from "./demo";
 import { createClient } from "./supabase/server";
 import { notifyPunch } from "./discord-notify";
 import { dayKey as dk } from "./time";
@@ -10,6 +12,7 @@ import type { EventKind, Plan, Policy } from "./types";
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  (await cookies()).delete(DEMO_COOKIE);
   redirect("/login");
 }
 

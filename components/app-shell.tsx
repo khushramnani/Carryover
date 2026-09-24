@@ -7,6 +7,7 @@ import { LogoMark } from "@/components/logo-mark";
 import { calculateBank, analyzeSession } from "@/lib/bank";
 import { fmtHMCompact, fmtTimeWithSec, dayKey } from "@/lib/time";
 import { signOut } from "@/lib/actions";
+import { useCarryover } from "@/components/demo-provider";
 import type { AppState } from "@/lib/types";
 
 interface AppShellProps {
@@ -25,7 +26,8 @@ const TAB_PATHS: Record<TabId, string> = {
   settings: "/settings",
 };
 
-export function AppShell({ email, state, children }: AppShellProps) {
+export function AppShell({ email, state: serverState, children }: AppShellProps) {
+  const { state } = useCarryover(serverState);
   const router = useRouter();
   const pathname = usePathname();
   const [userMenuOpen, setUserMenuOpen] = useState(false);

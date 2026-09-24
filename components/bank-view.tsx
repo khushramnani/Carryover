@@ -6,12 +6,14 @@ import { analyzeSession, calculateBank } from "@/lib/bank";
 import { fmtDayKey, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
 import type { AppState } from "@/lib/types";
+import { useCarryover } from "@/components/demo-provider";
 
 interface BankViewProps {
   state: AppState;
 }
 
-export function BankView({ state }: BankViewProps) {
+export function BankView({ state: serverState }: BankViewProps) {
+  const { state } = useCarryover(serverState);
   const router = useRouter();
 
   const bank = useMemo(

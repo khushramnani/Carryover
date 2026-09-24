@@ -9,7 +9,7 @@ import { calculateBank } from "@/lib/bank";
 // disagrees with the day_key the Apply button actually writes.
 import { dayKey as dk, fmtDayKey, fmtDayKeyFull, fmtHMCompact, startOfDay, addDays } from "@/lib/time";
 import { MS } from "@/lib/utils";
-import { applyPlan, removePlan as removePlanAction } from "@/lib/actions";
+import { useCarryover } from "@/components/demo-provider";
 import type { AppState } from "@/lib/types";
 
 type PresetId = "half" | "late" | "early" | "full" | "custom";
@@ -18,7 +18,11 @@ interface PlanViewProps {
   state: AppState;
 }
 
-export function PlanView({ state }: PlanViewProps) {
+export function PlanView({ state: serverState }: PlanViewProps) {
+  const {
+    state,
+    actions: { applyPlan, removePlan: removePlanAction },
+  } = useCarryover(serverState);
   const today = startOfDay(Date.now());
   const searchParams = useSearchParams();
   const presetFromUrl = searchParams.get("preset") as PresetId | null;

@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
+import { DEMO_COOKIE, demoEnabled } from "./demo";
 import { createClient } from "./supabase/server";
 import { sessionsFromEvents, plansFromRows } from "./bank";
 import { DEFAULT_POLICY, mapEvent, mapPlan, mapProfile } from "./mappers";
@@ -26,10 +28,22 @@ export const getProfile = cache(async (): Promise<ProfileRow | null> => {
   return data ?? null;
 });
 
+/** Test-user mode: no Supabase session, but the demo cookie is set (see lib/demo.ts). */
+export const isDemoSession = cache(async (): Promise<boolean> => {
+  if (!demoEnabled()) return false;
+  if (await getUser()) return false; // a real sign-in always wins
+  return (await cookies()).get(DEMO_COOKIE)?.value === "1";
+});
+
 export const getAppState = cache(async (): Promise<AppState | null> => {
   const supabase = await createClient();
   const user = await getUser();
-  if (!user) return null;
+  if (!user) {
+    // Real data for a demo visitor lives in their browser; DemoProvider swaps it in.
+    return (await isDemoSession())
+      ? { policy: DEFAULT_POLICY, sessions: {}, plans: {} }
+      : null;
+  }
 
   const [profile, { data: events }, { data: plans }] = await Promise.all([
     getProfile(),

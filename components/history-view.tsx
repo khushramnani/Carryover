@@ -6,6 +6,7 @@ import { analyzeSession, calculateBank } from "@/lib/bank";
 import { fmtDayKey, fmtDayKeyFull, fmtHMCompact, fmtTime } from "@/lib/time";
 import { MS } from "@/lib/utils";
 import type { AppState } from "@/lib/types";
+import { useCarryover } from "@/components/demo-provider";
 
 interface HistoryViewProps {
   state: AppState;
@@ -13,7 +14,8 @@ interface HistoryViewProps {
 
 type Range = "7" | "14" | "30";
 
-export function HistoryView({ state }: HistoryViewProps) {
+export function HistoryView({ state: serverState }: HistoryViewProps) {
+  const { state } = useCarryover(serverState);
   const [range, setRange] = useState<Range>("14");
 
   const byDay = useMemo(

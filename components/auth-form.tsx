@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fmtTimeWithSec } from "@/lib/time";
 import { LogoMark } from "@/components/logo-mark";
+import { DEMO_COOKIE, demoEnabled } from "@/lib/demo";
 
 const ERRORS: Record<string, string> = {
   "not-a-member":
@@ -165,6 +166,26 @@ export function AuthForm({ error }: { error?: string }) {
             <DiscordMark />
             {busy ? "Opening Discord…" : "Continue with Discord"}
           </button>
+
+          {demoEnabled() && (
+            <>
+              <div className="auth-divider">OR</div>
+              <button
+                className="btn full lg"
+                type="button"
+                onClick={() => {
+                  document.cookie = `${DEMO_COOKIE}=1; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+                  // Full navigation so the middleware sees the new cookie.
+                  window.location.href = "/today";
+                }}
+              >
+                Try as test user
+              </button>
+              <p className="tiny" style={{ textAlign: "center", marginTop: 8 }}>
+                No sign-in needed. Your data stays in this browser.
+              </p>
+            </>
+          )}
 
           <div className="auth-legal">
             Access is granted by membership of the Figmenta Discord server. You
