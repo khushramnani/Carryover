@@ -6,12 +6,17 @@ export const metadata = {
   title: "Sign in · Carryover",
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) redirect("/today");
 
-  return <AuthForm />;
+  const { error } = await searchParams;
+  return <AuthForm error={error} />;
 }

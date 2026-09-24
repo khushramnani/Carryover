@@ -4,9 +4,12 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Banner } from "@/components/banner";
 import { calculateBank } from "@/lib/bank";
-import { dayKey as dk, fmtDate, fmtDateFull, fmtHMCompact, startOfDay, addDays } from "@/lib/time";
+// Labels format selKey, not selectedDay: selectedDay is an IST-fixed midnight,
+// so rendering it in the host zone shows the previous day on a UTC server and
+// disagrees with the day_key the Apply button actually writes.
+import { dayKey as dk, fmtDayKey, fmtDayKeyFull, fmtHMCompact, startOfDay, addDays } from "@/lib/time";
 import { MS } from "@/lib/utils";
-import { applyPlan, removePlan as removePlanAction } from "@/lib/actions";
+import { useCarryover } from "@/components/demo-provider";
 import type { AppState } from "@/lib/types";
 
 type PresetId = "half" | "late" | "early" | "full" | "custom";
@@ -15,11 +18,18 @@ interface PlanViewProps {
   state: AppState;
 }
 
-export function PlanView({ state }: PlanViewProps) {
+export function PlanView({ state: serverState }: PlanViewProps) {
+  const {
+    state,
+    actions: { applyPlan, removePlan: removePlanAction },
+  } = useCarryover(serverState);
   const today = startOfDay(Date.now());
   const searchParams = useSearchParams();
   const presetFromUrl = searchParams.get("preset") as PresetId | null;
 
+  // TZ: the calendar grid is built from the browser's local Date. Correct for
+  // any zone from UTC-5:30 eastwards (dayKey() shifts to IST before bucketing),
+  // and every user is in IST today. Move to IST-fixed math if that changes.
   const [monthBase, setMonthBase] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -230,7 +240,7 @@ export function PlanView({ state }: PlanViewProps) {
       <div className="plan-card">
         <div className="card">
           <div className="card-title">
-            Selected day <span className="meta">{fmtDateFull(selectedDay)}</span>
+            Selected day <span className="meta">{fmtDayKeyFull(selKey)}</span>
           </div>
 
           {existingPlan ? (
@@ -364,7 +374,7 @@ export function PlanView({ state }: PlanViewProps) {
                 className="event-row"
                 style={{ gridTemplateColumns: "auto 1fr auto auto", gap: 12 }}
               >
-                <span className="event-time">{fmtDate(new Date(plan.dayKey))}</span>
+                <span className="event-time">{fmtDayKey(plan.dayKey)}</span>
                 <span className="event-label">
                   {plan.presetTitle ||
                     presets.find((p) => p.id === plan.preset)?.title}

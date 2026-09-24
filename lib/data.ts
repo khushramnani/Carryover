@@ -1,83 +1,11 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
+import { DEMO_COOKIE, demoEnabled } from "./demo";
 import { createClient } from "./supabase/server";
 import { sessionsFromEvents, plansFromRows } from "./bank";
-import { DEFAULT_PHRASES } from "./phrases";
-import type { AppState, EventKind, Plan, WorkEvent } from "./types";
-import type { ProfileRow, EventRow, PlanRow } from "./supabase/types";
-
-function mapProfile(row: ProfileRow): AppState["policy"] {
-  const rawPhrases = row.phrases as Record<string, string[]> | null;
-  const phrases = {
-    in: rawPhrases?.in ?? DEFAULT_PHRASES.in,
-    out: rawPhrases?.out ?? DEFAULT_PHRASES.out,
-    break: rawPhrases?.break ?? DEFAULT_PHRASES.break,
-    resume: rawPhrases?.resume ?? DEFAULT_PHRASES.resume,
-  };
-  return {
-    requiredMs: Number(row.required_ms),
-    officialStart: row.official_start,
-    officialEnd: row.official_end,
-    breakCountsAgainst: row.break_counts_against,
-    theme: row.theme,
-    phrases,
-  };
-}
-
-function mapEvent(row: EventRow): WorkEvent {
-  return {
-    id: row.id,
-    ts: new Date(row.ts).getTime(),
-    kind: row.kind as EventKind,
-    raw: row.raw,
-  };
-}
-
-function mapPlan(row: PlanRow): Plan {
-  return {
-    id: row.id,
-    dayKey: row.day_key,
-    preset: row.preset,
-    presetTitle: row.preset_title,
-    costMs: Number(row.cost_ms),
-    note: row.note,
-    applied: row.applied,
-    createdAt: new Date(row.created_at).getTime(),
-  };
-}
-
-export const getAppState = cache(async (): Promise<AppState | null> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const [{ data: profile }, { data: events }, { data: plans }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("events").select("*").eq("user_id", user.id).order("ts", { ascending: true }),
-    supabase.from("plans").select("*").eq("user_id", user.id),
-  ]);
-
-  const policy = profile
-    ? mapProfile(profile)
-    : {
-        requiredMs: 8 * 60 * 60 * 1000,
-        officialStart: "12:00",
-        officialEnd: "20:00",
-        breakCountsAgainst: false,
-        theme: "dark" as const,
-        phrases: DEFAULT_PHRASES,
-      };
-
-  const eventObjs = (events ?? []).map(mapEvent);
-  const planObjs = (plans ?? []).map(mapPlan);
-
-  return {
-    policy,
-    sessions: sessionsFromEvents(eventObjs),
-    plans: plansFromRows(planObjs),
-  };
-});
+import { DEFAULT_POLICY, mapEvent, mapPlan, mapProfile } from "./mappers";
+import type { AppState } from "./types";
+import type { ProfileRow } from "./supabase/types";
 
 export const getUser = cache(async () => {
   const supabase = await createClient();
@@ -85,4 +13,47 @@ export const getUser = cache(async () => {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
+});
+
+/** Raw profile row — carries the Discord identity that the policy mapper drops. */
+export const getProfile = cache(async (): Promise<ProfileRow | null> => {
+  const user = await getUser();
+  if (!user) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+  return data ?? null;
+});
+
+/** Test-user mode: no Supabase session, but the demo cookie is set (see lib/demo.ts). */
+export const isDemoSession = cache(async (): Promise<boolean> => {
+  if (!demoEnabled()) return false;
+  if (await getUser()) return false; // a real sign-in always wins
+  return (await cookies()).get(DEMO_COOKIE)?.value === "1";
+});
+
+export const getAppState = cache(async (): Promise<AppState | null> => {
+  const supabase = await createClient();
+  const user = await getUser();
+  if (!user) {
+    // Real data for a demo visitor lives in their browser; DemoProvider swaps it in.
+    return (await isDemoSession())
+      ? { policy: DEFAULT_POLICY, sessions: {}, plans: {} }
+      : null;
+  }
+
+  const [profile, { data: events }, { data: plans }] = await Promise.all([
+    getProfile(),
+    supabase.from("events").select("*").eq("user_id", user.id).order("ts", { ascending: true }),
+    supabase.from("plans").select("*").eq("user_id", user.id),
+  ]);
+
+  return {
+    policy: profile ? mapProfile(profile) : DEFAULT_POLICY,
+    sessions: sessionsFromEvents((events ?? []).map(mapEvent)),
+    plans: plansFromRows((plans ?? []).map(mapPlan)),
+  };
 });

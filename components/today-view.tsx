@@ -6,14 +6,18 @@ import { EventRow } from "@/components/event-row";
 import { analyzeSession } from "@/lib/bank";
 import { dayKey, fmtHM, fmtHMCompact, fmtTime } from "@/lib/time";
 import { clamp } from "@/lib/utils";
-import { addEvent, deleteEvent, resetDay } from "@/lib/actions";
+import { useCarryover } from "@/components/demo-provider";
 import type { AppState, EventKind } from "@/lib/types";
 
 interface TodayViewProps {
   state: AppState;
 }
 
-export function TodayView({ state }: TodayViewProps) {
+export function TodayView({ state: serverState }: TodayViewProps) {
+  const {
+    state,
+    actions: { addEvent, deleteEvent, resetDay },
+  } = useCarryover(serverState);
   const [now, setNow] = useState(() => Date.now());
   const [isPending, startTransition] = useTransition();
 

@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./types";
+import { DEMO_COOKIE, demoEnabled } from "../demo";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,7 +34,11 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/auth");
 
-  if (!user && !isAuthRoute) {
+  // Test-user mode (lib/demo.ts): let them in; the app layout serves them
+  // localStorage-backed data and never queries the database on their behalf.
+  const isDemo = demoEnabled() && request.cookies.get(DEMO_COOKIE)?.value === "1";
+
+  if (!user && !isAuthRoute && !isDemo) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
